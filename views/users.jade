@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  h1 User List
+  ul
+    each user in users
+      li= user.name
+      if user.email
+        span Email: #{user.email}
+      if user.age
+        span Age: #{user.age}
+      if user.address
+        span Address: #{user.address}
+      if user.phone
+        span Phone: #{user.phone}
