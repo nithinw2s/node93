@@ -10,7 +10,7 @@ router.get("/:id", userController.getUserById);
 
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await db.execute("SELECT * FROM new_table");
+    const [rows] = await db.execute("SELECT * FROM newtable1");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -19,11 +19,11 @@ router.get("/", async (req, res) => {
 
 // Create a new user
 router.post("/", async (req, res) => {
-  const { id = 1, firstName, lastName, city } = req.body;
+  const { firstName, lastName, city } = req.body;
   try {
     const [result] = await db.execute(
-      "INSERT INTO new_table (id, firstName, lastName, city) VALUES (?, ?, ?, ?)",
-      [id, firstName, lastName, city]
+      "INSERT INTO newtable1 (firstName, lastName, city) VALUES (?, ?, ?)",
+      [firstName, lastName, city]
     );
     res.status(201).json({ id: result.insertId, firstName, lastName, city });
   } catch (error) {
