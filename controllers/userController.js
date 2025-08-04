@@ -1,17 +1,23 @@
-const useModel = require('../models/userModel');
+const User = require("../models/user");
 
-// Function to get all users
-exports.getAllUsers = (req, res) => {
-  const users = useModel.getAllUsers();
-  res.render("users", { users });
+exports.createUser = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ error: "Name and email are required" });
+    }
+    const user = await User.create(name, email);
+    res.status(201).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Function to get a user by ID
-exports.getUserById = (req, res) => {
-  const user = useModel.getUserById(parseInt(req.params.id, 10));
-  if (user) {
-    res.render("users", { user });;
-  } else {
-    res.status(404).json({ message: 'User not found' });
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
