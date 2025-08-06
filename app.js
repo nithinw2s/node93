@@ -3,11 +3,11 @@ const apiRoutes = require("./routes/api");
 
 const app = express();
 
-    // Middleware to parse JSON requests
-    app.use(express.json());
-
-    // Use API routes
+// Middleware to parse JSON requests
+app.use(express.json());
+// Use API routes
 app.use("/api", apiRoutes);
+
 
 // Start the server
 const PORT = 3000;

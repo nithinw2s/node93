@@ -1,14 +1,16 @@
-// config/db.js
-const mysql = require("mysql2");
+const { Sequelize } = require("sequelize");
 
-const pool = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "testdb93",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+// mysql://user:password@host:port/database
+
+const sequelize = new Sequelize("mysql://root:root@localhost:3306/testdb93", {
+  dialect: "mysql",
+  logging: false,
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
 });
 
-module.exports = pool.promise(); // we use promise wrapper for async/await
+module.exports = sequelize; // export the sequelize instance
