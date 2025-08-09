@@ -8,6 +8,10 @@ app.use(express.json());
 // Use API routes
 app.use("/api", apiRoutes);
 
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Something went wrong!" });
+});
 
 // Start the server
 const PORT = 3000;

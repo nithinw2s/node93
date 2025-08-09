@@ -37,7 +37,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.getUserById = async (req, res) => {
-  exports.getAllUsers(req, res, {
+  exports.getUsers(req, res, {
     where: { id: req.params.id },
     limit: 1,
   });

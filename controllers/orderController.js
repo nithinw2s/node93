@@ -44,7 +44,7 @@ exports.deleteOrder = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
     await order.destroy();
-    res.status(200).json(order);
+    res.status(200).json({ message: "Order deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
