@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
     const expires_at = new Date(Date.now() + 10 * 60 * 1000);
     console.log(`Generated OTP: ${otp}, Expires at: ${expires_at}`);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(String(password), 10);
 
     if (user) {
       // Only update OTP and expiry
@@ -114,16 +114,28 @@ exports.login = async (req, res) => {
       await t.rollback();
       return res.status(400).json({ error: 'Email and password are required' });
     }
+
     const user = await User.findOne({ where: { email } });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
       await t.rollback();
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
-    await t.commit();
-    res.status(200).json({ user: { id: user.id, name: user.name, email }, token });
+
+    const passwordMatch = await bcrypt.compare(String(password), user.password);
+    console.log("No user found", passwordMatch);
+    if (user.is_registered === true && passwordMatch) {
+      const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
+      await t.commit();
+      return res.status(200).json({
+        user: { id: user.id, name: user.name, email: user.email },
+        token
+      });
+    } else {
+      await t.rollback();
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
   } catch (error) {
     await t.rollback();
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
