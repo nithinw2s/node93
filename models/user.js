@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 
 const dbVersion = sequelize.databaseVersion()
@@ -37,11 +38,62 @@ const User = sequelize.define('User', {
       }
     }
   },
+  password: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    validate: {
+      notEmpty: { msg: 'Password cannot be empty' },
+      len: { args: [6, 255], msg: 'Password must be at least 6 characters long' },
+    },
+  },
+  otp: {
+    type: DataTypes.MEDIUMINT,
+    allowNull: true,
+    validate: {
+      isNumeric: {
+        msg: "OTP must be a number"
+      },
+      len: {
+        args: [4, 6],
+        msg: "OTP must be 4 to 6 digits long"
+      }
+    }
+  },
+  is_registered: {
+    type: DataTypes.TINYINT(1),
+    allowNull: false,
+    defaultValue: false
+  },
+  expires_at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    validate: {
+      isDate: {
+        msg: "Expires at must be a valid date"
+      },
+      notEmpty: {
+        msg: "Expires at cannot be empty"
+      }
+    }
+  }
 },
   {
     tableName: 'users',
     timestamps: false, // Disable timestamps if not needed
     underscored: true, // Use snake_case for column names
+    hooks:{
+      beforeCreate: async (user) => {
+        user.password = await bcrypt.hash(user.password, 10);
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed('password')) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+    },
+    logging: (msg) => {
+      console.log(`[Sequelize Query]: ${msg}`);
+    }
   }
 );
 

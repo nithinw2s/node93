@@ -1,6 +1,7 @@
 const sequelize = require('../config/db');
 const User = require('./user');
 const Order = require('./order');
+const Log = require('./log');
 
 User.hasMany(Order, { foreignKey: 'user_id' });
 Order.belongsTo(User, { foreignKey: 'user_id' });
@@ -19,4 +20,5 @@ sequelize.authenticate().then(() => {
 module.exports = {
   User,
   Order,
+  Log,
 };

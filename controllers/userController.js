@@ -2,19 +2,6 @@ const { where } = require("sequelize");
 const { User } = require("../models/index");
 const { options } = require("../routes/api");
 
-exports.createUser = async (req, res) => {
-  try {
-    const { name, email } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: "Name and email are required" });
-    }
-    const user = await User.create({ name, email });
-    res.status(201).json(user);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 exports.getUsers = async (req, res, options = {}) => {
   try {
     const users = await User.findAll(options);
