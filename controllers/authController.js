@@ -15,6 +15,25 @@ const transporter = nodemailer.createTransport({
   }
 })
 
+    // Generate OTP (store as string to avoid type mismatches)
+    const otp = String(Math.floor(1000 + Math.random() * 9000));
+    const expires_at = new Date(Date.now() + 10 * 60 * 1000);
+
+const sendOtpEmail = async (email, otp=1234) => {
+  
+  // Send OTP email after DB commit
+    try {
+      await transporter.sendMail({
+        from: "nithin190902@gmail.com",
+        to: email,
+        subject: 'Your OTP for Registration',
+        text: `Your OTP is ${otp}. It expires in 10 minutes.`,
+      });
+    } catch (mailError) {
+      console.error("Email send failed:", mailError);
+    }
+  }
+
 // 🔑 Secret key for encryption/decryption
     const SECRET_KEY = 'sorna'; // You should store this securely (e.g., environment variable)
 
@@ -45,9 +64,6 @@ exports.register = async (req, res) => {
     // Check if user exists
     let user = await User.findOne({ where: { email } });
 
-    // Generate OTP (store as string to avoid type mismatches)
-    const otp = String(Math.floor(1000 + Math.random() * 9000));
-    const expires_at = new Date(Date.now() + 10 * 60 * 1000);
     console.log(`Generated OTP: ${otp}, Expires at: ${expires_at}`);
 
     const encript = encryptPassword(password);
@@ -69,17 +85,7 @@ exports.register = async (req, res) => {
 
     await t.commit();
 
-    // Send OTP email after DB commit
-    try {
-      await transporter.sendMail({
-        from: "nithin190902@gmail.com",
-        to: email,
-        subject: 'Your OTP for Registration',
-        text: `Your OTP is ${otp}. It expires in 10 minutes.`,
-      });
-    } catch (mailError) {
-      console.error("Email send failed:", mailError);
-    }
+    sendOtpEmail(email, otp);
 
     return res.status(201).json({
       user: { id: user.id, name: user.name, email: user.email },
@@ -152,6 +158,74 @@ exports.login = async (req, res) => {
       await t.rollback();
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+  } catch (error) {
+    await t.rollback();
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { email, oldPassword, newPassword } = req.body;
+    if (!email || !oldPassword || !newPassword) {
+      await t.rollback();
+      return res.status(400).json({ error: 'Email, old password, and new password are required' });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      await t.rollback();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log("User details:", user.password, );
+    const decryptedPassword = decryptPassword(user.password);
+    console.log("Decrypted password:", decryptedPassword, "Old password:", oldPassword.trim());
+
+    if (decryptedPassword !== oldPassword.trim()) {
+      await t.rollback();
+      return res.status(401).json({ error: 'Invalid old password' });
+    }
+
+    console.log("Changing password for user-email:", user.email, "user-password:",user.password, "encrypted-password:", user.password,"encrypted-new-password:", encryptPassword(newPassword.trim()));
+    user.password = encryptPassword(newPassword.trim());
+    await user.save({ transaction: t });
+    await t.commit();
+    return res.status(200).json({ message: 'Password changed successfully' });
+  } catch (error) {
+    await t.rollback();
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+exports.forgetPassword = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { email } = req.body;
+    if (!email) {
+      await t.rollback();
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      await t.rollback();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate OTP and expiration time
+    // const otp = String(Math.floor(1000 + Math.random() * 9000));
+    // const expires_at = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.otp = otp;
+    user.expires_at = expires_at;
+    await user.save({ transaction: t });
+
+    sendOtpEmail(email, otp);
+
+    await t.commit();
+    return res.status(200).json({ message: 'OTP sent successfully' });
   } catch (error) {
     await t.rollback();
     return res.status(500).json({ error: error.message });

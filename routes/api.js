@@ -9,6 +9,9 @@ const auth = require("../middleware/auth");
 router.post('/register', authController.register);
 router.post('/verify-otp', authController.verifyOtp);
 router.post('/login', authController.login);
+router.post('/change-password', auth, authController.changePassword);
+router.post('/forgot-password', authController.forgetPassword);
+router.post('/reset-password/otp-verify', authController);
 
 // Middleware to protect routes
 router.get("/users", auth, userController.getAllUsers);
