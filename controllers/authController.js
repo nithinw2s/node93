@@ -142,7 +142,7 @@ exports.login = async (req, res) => {
 
     const decryptedPassword = decryptPassword(user.password);
     if (user.is_registered && decryptedPassword === password.trim()) {
-      const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
+      const token = jwt.sign({ id: user.id }, 'node93', { expiresIn: '1h' });
       await t.commit();
       return res.status(200).json({
         user: { id: user.id, name: user.name, email: user.email },

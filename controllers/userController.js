@@ -5,7 +5,11 @@ const { options } = require("../routes/api");
 exports.getUsers = async (req, res, options = {}) => {
   try {
     const users = await User.findAll(options);
-    res.status(200).json(users);
+    const userData = users.map((user) => {
+      const { password, otp, expires_at, is_registered, ...rest } = user.toJSON();
+      return rest;
+    });
+    res.status(200).json(userData);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

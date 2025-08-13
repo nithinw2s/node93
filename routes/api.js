@@ -11,8 +11,8 @@ router.post('/verify-otp', authController.verifyOtp);
 router.post('/login', authController.login);
 
 // Middleware to protect routes
-router.get("/users", userController.getAllUsers);
-router.get("/users/top-ten", userController.getTopTenUsers);
+router.get("/users", auth, userController.getAllUsers);
+router.get("/users/top-ten", auth, userController.getTopTenUsers);
 router.get("/user/:id", auth, userController.getUserById);
 router.put("/user/:id", auth, userController.updateUserEmail);
 
