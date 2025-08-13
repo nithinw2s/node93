@@ -15,6 +15,23 @@ const transporter = nodemailer.createTransport({
   }
 })
 
+// 🔑 Secret key for encryption/decryption
+    const SECRET_KEY = 'sorna'; // You should store this securely (e.g., environment variable)
+
+    // 🔐 Encrypt a password
+    function encryptPassword(password) {
+      const ciphertext = CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
+      return ciphertext;
+    }
+
+    // 🔓 Decrypt a password
+    function decryptPassword(ciphertext) {
+      const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+      const originalPassword = bytes.toString(CryptoJS.enc.Utf8);
+      return originalPassword;
+    }
+
+
 exports.register = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -33,36 +50,19 @@ exports.register = async (req, res) => {
     const expires_at = new Date(Date.now() + 10 * 60 * 1000);
     console.log(`Generated OTP: ${otp}, Expires at: ${expires_at}`);
 
-    // 🔑 Secret key for encryption/decryption
-    const SECRET_KEY = 'sorna'; // You should store this securely (e.g., environment variable)
-
-    // 🔐 Encrypt a password
-    function encryptPassword(password) {
-      const ciphertext = CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
-      return ciphertext;
-    }
-
-    // 🔓 Decrypt a password
-    function decryptPassword(ciphertext) {
-      const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
-      const originalPassword = bytes.toString(CryptoJS.enc.Utf8);
-      return originalPassword;
-    }
-
-    const dbPasstest = "testpassword";
+    const encript = encryptPassword(password);
 
     if (user) {
       console.log("User already exists, updating OTP, password and expiry");
-      // Only update OTP and expiry
       user.otp = otp;
       user.expires_at = expires_at;
-      user.password = dbPasstest;
+      user.password = encript;
       await user.save({ transaction: t });
     } else {
       console.log("Creating new user");
       // Create new user
       user = await User.create(
-        { name, email, password: dbPasstest, otp, expires_at },
+        { name, email, password: encript, otp, expires_at },
         { transaction: t }
       );
     }
@@ -77,7 +77,6 @@ exports.register = async (req, res) => {
         subject: 'Your OTP for Registration',
         text: `Your OTP is ${otp}. It expires in 10 minutes.`,
       });
-      console.log(user.createdAt ? `Sent OTP to ${email}` : `Resent OTP to ${email}`);
     } catch (mailError) {
       console.error("Email send failed:", mailError);
     }
@@ -98,7 +97,6 @@ exports.verifyOtp = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { email, otp } = req.body;
-    console.log("Verifying OTP for email:", email, "OTP:", otp);
     if (!email || !otp) {
       await t.rollback();
       return res.status(400).json({ error: 'Email and OTP are required' });
@@ -142,9 +140,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials user not found' });
     }
 
-    const passwordMatch = await bcrypt.compare(password.trim(), user.password);
-    console.log("No user found", passwordMatch);
-    if (user.is_registered === true && passwordMatch) {
+    const decryptedPassword = decryptPassword(user.password);
+    if (user.is_registered && decryptedPassword === password.trim()) {
       const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
       await t.commit();
       return res.status(200).json({

@@ -2,7 +2,7 @@ const { Sequelize } = require("sequelize");
 
 // mysql://user:password@host:port/database
 
-const sequelize = new Sequelize("mysql://root:root@localhost:3306/authtestdb", {
+const sequelize = new Sequelize("mysql://root:root@localhost:3306/encripttest", {
   dialect: "mysql",
   logging: false,
   pool: {

@@ -81,16 +81,16 @@ const User = sequelize.define('User', {
     tableName: 'users',
     timestamps: false, // Disable timestamps if not needed
     underscored: true, // Use snake_case for column names
-    hooks:{
-      beforeCreate: async (user) => {
-        user.password = await bcrypt.hash(user.password, 10);
-      },
-      beforeUpdate: async (user) => {
-        if (user.changed('password')) {
-          user.password = await bcrypt.hash(user.password, 10);
-        }
-      },
-    },
+    // hooks:{
+    //   beforeCreate: async (user) => {
+    //     user.password = await bcrypt.hash(user.password, 10);
+    //   },
+    //   beforeUpdate: async (user) => {
+    //     if (user.changed('password')) {
+    //       user.password = await bcrypt.hash(user.password, 10);
+    //     }
+    //   },
+    // },
     logging: (msg) => {
       console.log(`[Sequelize Query]: ${msg}`);
     }
