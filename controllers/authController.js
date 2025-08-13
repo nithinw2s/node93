@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const sequelize = require('../config/db');
 const { User } = require('../models');
 const nodemailer = require('nodemailer');
+const CryptoJS = require('crypto-js');
+
 
 // Simulated email transport (replace with real SMTP for production)
 const transporter = nodemailer.createTransport({
@@ -31,17 +33,36 @@ exports.register = async (req, res) => {
     const expires_at = new Date(Date.now() + 10 * 60 * 1000);
     console.log(`Generated OTP: ${otp}, Expires at: ${expires_at}`);
 
-    const hashedPassword = await bcrypt.hash(String(password), 10);
+    // 🔑 Secret key for encryption/decryption
+    const SECRET_KEY = 'sorna'; // You should store this securely (e.g., environment variable)
+
+    // 🔐 Encrypt a password
+    function encryptPassword(password) {
+      const ciphertext = CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
+      return ciphertext;
+    }
+
+    // 🔓 Decrypt a password
+    function decryptPassword(ciphertext) {
+      const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+      const originalPassword = bytes.toString(CryptoJS.enc.Utf8);
+      return originalPassword;
+    }
+
+    const dbPasstest = "testpassword";
 
     if (user) {
+      console.log("User already exists, updating OTP, password and expiry");
       // Only update OTP and expiry
       user.otp = otp;
       user.expires_at = expires_at;
+      user.password = dbPasstest;
       await user.save({ transaction: t });
     } else {
+      console.log("Creating new user");
       // Create new user
       user = await User.create(
-        { name, email, password: hashedPassword, otp, expires_at },
+        { name, email, password: dbPasstest, otp, expires_at },
         { transaction: t }
       );
     }
@@ -118,10 +139,10 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ where: { email } });
     if (!user) {
       await t.rollback();
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid credentials user not found' });
     }
 
-    const passwordMatch = await bcrypt.compare(String(password), user.password);
+    const passwordMatch = await bcrypt.compare(password.trim(), user.password);
     console.log("No user found", passwordMatch);
     if (user.is_registered === true && passwordMatch) {
       const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
