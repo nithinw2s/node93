@@ -64,6 +64,11 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: false
   },
+  is_password_reset: {
+    type: DataTypes.TINYINT(1),
+    allowNull: false,
+    defaultValue: false
+  },
   expires_at: {
     type: DataTypes.DATE,
     allowNull: false,
